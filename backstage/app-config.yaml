@@ -1,0 +1,95 @@
+app:
+  title: Scaffolded Backstage App
+  baseUrl: http://localhost:3000
+
+# Enable this for GitHub identity federation.
+# organization:
+#   name: "Your GitHub Organization"
+
+backend:
+  # Used for enabling authentication, secret is shared by all backend plugins
+  # See https://backstage.io/docs/auth/service-to-service-auth for
+  # information on the format
+  # auth:
+  #   keys:
+  #     - secret: ${BACKEND_SECRET}
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+    # Uncomment the following host directive to bind to all IPv4 interfaces and
+    # not just the baseUrl hostname.
+    # host: 0.0.0.0
+  csp:
+    connect-src: ["'self'", 'http:', 'https:']
+    # Content-Security-Policy directives follow the Helmet format: https://helmetjs.github.io/#reference
+    # Default Helmet Content-Security-Policy values can be removed by setting the key to false
+  cors:
+    origin: ${BASE_URL}
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  # This is for local development only, it is not recommended to use this in production
+  # The production database configuration is stored in app-config.production.yaml
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+  cache:
+    store: memory
+  # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
+
+# Enable this for GitHub identity federation. Requires creating of a GitHub app. See https://backstage.io/docs/integrations/github/github-apps/
+# integrations:
+#   github:
+#     - host: github.com
+#       apps:
+#         -   appId: ${GH_APP_ID}
+#             webhookUrl: ${GH_WEB_HOOK}
+#             clientId: ${GH_CLIENT_ID}
+#             clientSecret: ${GH_CLIENT_SECRET}
+#             webhookSecret: empty
+#             privateKey: ${GH_PRIVATE_KEY}
+
+# Reference documentation http://backstage.io/docs/features/techdocs/configuration
+# Note: After experimenting with basic setup, use CI/CD to generate docs
+# and an external cloud storage when deploying TechDocs for production use-case.
+# https://backstage.io/docs/features/techdocs/how-to-guides#how-to-migrate-from-techdocs-basic-to-recommended-deployment-approach
+techdocs:
+  builder: 'local' # Alternatives - 'external'
+  generator:
+    runIn: 'local' # Alternatives - 'local'
+  publisher:
+    type: 'local' # Alternatives - 'googleGcs' or 'awsS3'. Read documentation for using alternatives.
+
+# auth:
+  # see https://backstage.io/docs/auth/ to learn about auth providers
+  # providers:
+  #     github:
+  #       production:
+  #         clientId: ${GITHUB_APP_ORG_CLIENT_ID}
+  #         clientSecret: ${GITHUB_APP_ORG_CLIENT_SECRET}
+
+scaffolder:
+  # see https://backstage.io/docs/features/software-templates/configuration for software template options
+  defaultCommitMessage: "Initial commit" # Defaults to 'Initial commit'
+
+catalog:
+  # Enable providers for github, awss3, or other sources to automatically sync your catalog from an external source.
+  # providers:
+  #   github:
+  #     providerId:
+  #       organization: '<GITHUB_ORG_NAME>' # string
+  #       catalogPath: '/catalog-info.yaml' # string
+  #       filters:
+  #         branch: 'main' # string
+  #         repository: '.*' # Regex
+  #   awsS3:
+  #     s3ProviderId:
+  #       region: us-west-2
+  #       bucketName: '<CATLOG_BUCKET_NAME>'
+  #       schedule:
+  #         frequency: { minutes: 30 }
+  #         timeout: { minutes: 3 }
+  import:
+    entityFilename: catalog-info.yaml
+    pullRequestBranchName: backstage-integration
+  rules:
+    - allow: [Component, System, API, Resource, Location, Domain, Template]

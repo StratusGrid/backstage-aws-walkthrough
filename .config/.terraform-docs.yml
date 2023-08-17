@@ -1,0 +1,103 @@
+version: ""
+
+formatter: markdown table
+
+name: template-terraform-infrastructure-starter
+
+content: |-
+  # template-terraform-infrastructure-starter
+
+  GitHub: [StratusGrid/template-terraform-infrastructure-starter](https://github.com/StratusGrid/template-terraform-infrastructure-starter)
+
+  ## Assumptions we make
+
+  * We assume you have a basic badge in Terraform
+
+  ## Terraform Infrastructure Starter
+  This repository is meant to be used when starting new infrastructure projects. Use the init-tfvars
+  and apply-tfvars to set store unique per account or per environment variables and then run per
+  environment like so:
+  ### Dev
+  ```
+  terraform init -backend-config=./init-tfvars/dev.tfvars 
+  terraform apply -var-file ./apply-tfvars/dev.tfvars
+  ```
+  ### Stg
+  ```
+  terraform init -backend-config=./init-tfvars/stg.tfvars 
+  terraform apply -var-file ./apply-tfvars/stg.tfvars
+  ```
+  ### Prd
+  ```
+  terraform init -backend-config=./init-tfvars/prd.tfvars 
+  terraform apply -var-file ./apply-tfvars/prd.tfvars
+  ```
+  Note: Before reading, uncomment the code for the environment that you
+  wish to apply the code to. This goes for both the init-tfvars and apply-tfvars
+  folders.
+
+  To properly implement infrastructure designed for a specific environment,
+  the config first has to be created locally and then migrated to AWS. For example, 
+  if we wanted to apply infrastructure to prd, we would first need do a basic
+  terraform init and then terraform apply using prd.tfvars. The below code 
+  illustrates this:
+
+  ```
+  terraform init 
+  terraform apply -var-file ./apply-tfvars/prd.tfvars
+  ```
+
+  Assuming the variables defined in prd.tfvars are valid and the terraform apply
+  works, we should have a local config with the prd variables applied to it. We should also
+  get some outputs in the terminal with values for "bucket", "DynamoDB_Table", and some others. 
+  We will need to copy those values and paste them into init-tfvars/(environemnt).tfvars for 
+  each key that exists. Since we are doing this example with prd in mind, it would be 
+  init-tfvars/prd.tfvars. We are now ready to migrate this local config to AWS.
+  To do that, change the file name of `state.tfnot` to `-state.tf` and
+  delete the .terraform folder at the top left of your screen. You'll then init again,
+  this time using the -backend-config option. For example:
+
+  ```
+  terraform init -backend-config=./init-tfvars/prd.tfvars 
+  ```
+
+  You should get a prompt asking if you want to migrate the config. Say yes and you should be set.
+  To switch environments, (for this example let's use dev) delete the .terraform folder and 
+  init using the back-end-config option:
+
+  ```
+  terraform init -backend-config=./init-tfvars/dev.tfvars 
+  ```
+
+  ## Documentation
+
+  This repo is self documenting via Terraform Docs, please see the note at the bottom.
+
+  ---
+
+  {{ .Requirements }}
+
+  {{ .Resources }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+  ---
+
+  Note, manual changes to the README will be overwritten when the documentation is updated. To update the documentation, run `terraform-docs -c .config/.terraform-docs.yml`
+
+sections:
+  show:
+    - requirements
+    - resources
+    - inputs
+    - outputs
+
+sort:
+  enabled: true
+  by: name
+
+output:
+  file: README.md
+  mode: replace
