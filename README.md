@@ -19,7 +19,7 @@ docker build -f packages/backend/Dockerfile
 ## Instructions
 Clone this repository.
 ```
-git clone git@github.com:mattbarlow-sg/backstage-aws-walkthrough.git
+git clone git@github.com:StratusGrid/backstage-aws-walkthrough.git
 ```
 [Authenticate with an AWS account](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
 
@@ -28,9 +28,9 @@ Set values for `backstage_domain_name` and `allowed_cidr` in `apply-tfvars/dev.t
 ```hcl
 region = "us-east-1"
 env_name = "dev"
-source_repo = "https://github.com/mattbarlow-sg/backstage-aws-walkthrough"
+source_repo = "https://github.com/StratusGrid/backstage-aws-walkthrough"
 application_name = "backstage"
-docker_image = "ghcr.io/mattbarlow-sg/backstage:latest"
+docker_image = "public.ecr.aws/r1z1c0k6/backstage:latest"
 vpc_cidr_octet = 10
 allowed_cidr = "10.0.0.1/32"
 backstage_domain_name = "mydomainname.com"
@@ -63,7 +63,7 @@ The Terraform outputs will display the URL. When you click on the URL you will s
 
 ## Next Steps
 - Enable Authentication with an authentication provider, e.g. [GitHub Authentication Provider](https://backstage.io/docs/auth/github/provider/).
-- Enable [GitHub Discovery](https://backstage.io/docs/integrations/github/discovery/)to automatically add repositories to the Backstage catalog.
+- Enable [GitHub Discovery](https://backstage.io/docs/integrations/github/discovery/) to automatically add repositories to the Backstage catalog.
 - Author [Backstage Software Templates](https://backstage.io/docs/features/software-templates/).
 - [Customize Backstage](https://backstage.io/docs/getting-started/app-custom-theme/).
 - [Configure CI/CD](https://docs.aws.amazon.com/codepipeline/latest/userguide/tutorials-ecs-ecr-codedeploy.html).
