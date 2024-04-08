@@ -1,9 +1,66 @@
 resource "aws_ecs_cluster" "backstage" {
   name = local.name
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
+
+resource "aws_kms_key" "backstage_key" {
+  description         = "KMS key for encrypting CloudWatch logs"
+  enable_key_rotation = true
+  policy              = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Enable IAM User Permissions",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      },
+      "Action": "kms:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "Allow CloudWatch Logs Use",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "logs.us-east-1.amazonaws.com"
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    },
+    {
+    "Sid": "Allow Access for ECS Task Execution Role",
+    "Effect": "Allow",
+    "Principal": {
+        "AWS": "${aws_iam_role.backstage.arn}"
+    },
+    "Action": [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+    ],
+    "Resource": "*"
+}
+  ]
+}
+POLICY
 }
 
 resource "aws_cloudwatch_log_group" "backstage" {
-  name = "/ecs/${local.name}"
+  name              = "/ecs/${local.name}"
+  kms_key_id        = aws_kms_key.backstage_key.arn
+  retention_in_days = 365
 }
 
 resource "aws_ecs_service" "backstage" {
@@ -37,6 +94,23 @@ data "aws_ecs_task_definition" "backstage" {
   task_definition = aws_ecs_task_definition.backstage.family
 }
 
+resource "random_password" "backend" {
+  length           = 16
+  special          = true
+  override_special = "_!%^"
+}
+
+resource "aws_secretsmanager_secret" "backend" {
+  name                    = "${local.name}-backend-key"
+  recovery_window_in_days = 0
+  kms_key_id              = aws_kms_key.backstage_key.arn
+}
+
+resource "aws_secretsmanager_secret_version" "backend" {
+  secret_id     = aws_secretsmanager_secret.backend.id
+  secret_string = random_password.backend.result
+}
+
 resource "aws_ecs_task_definition" "backstage" {
   family = local.name
 
@@ -56,6 +130,10 @@ resource "aws_ecs_task_definition" "backstage" {
       "secrets": [{
         "name": "PG_PASSWORD",
         "valueFrom": "${aws_secretsmanager_secret.db_password.arn}"
+      },
+      {
+        "name": "BACKEND_SECRET",
+        "valueFrom": "${aws_secretsmanager_secret.backend.arn}"
       }],
       "portMappings": [
         {
@@ -76,12 +154,12 @@ resource "aws_ecs_task_definition" "backstage" {
 EOF
 
   execution_role_arn = aws_iam_role.backstage.arn
-  task_role_arn = aws_iam_role.backstage_task.arn
+  task_role_arn      = aws_iam_role.backstage_task.arn
 
   cpu                      = 256
   memory                   = 512
   requires_compatibilities = ["FARGATE"]
-  depends_on               = [aws_secretsmanager_secret_version.password]
+  depends_on               = [aws_secretsmanager_secret_version.password, aws_secretsmanager_secret_version.backend]
 
   network_mode = "awsvpc"
 }
@@ -89,18 +167,14 @@ EOF
 resource "aws_iam_role" "backstage" {
   name               = "${local.name}-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
-  inline_policy {
-    name   = "policy-${local.name}-secrets"
-    policy = data.aws_iam_policy_document.secrets_manager_access.json
-  }
 }
 
 resource "aws_iam_role" "backstage_task" {
-    name               = "${local.name}-task-role"
-    assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
-    inline_policy {
-        name   = "policy-${local.name}-task-templates"
-        policy = data.aws_iam_policy_document.template_bucket_access.json
+  name               = "${local.name}-task-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
+  inline_policy {
+    name   = "policy-${local.name}-task-templates"
+    policy = data.aws_iam_policy_document.template_bucket_access.json
   }
 }
 
@@ -115,11 +189,20 @@ data "aws_iam_policy_document" "ecs_task_assume_role" {
   }
 }
 
-data "aws_iam_policy_document" "secrets_manager_access" {
-  statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.db_password.arn]
-  }
+resource "aws_iam_policy" "secrets_manager_access" {
+  name = "task_secrets_manager_access"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Effect   = "Allow"
+        Resource = [aws_secretsmanager_secret.db_password.arn, aws_secretsmanager_secret.backend.arn]
+      },
+    ]
+  })
 }
 
 data "aws_iam_policy" "ecs_task_execution_role" {
@@ -142,6 +225,11 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
   policy_arn = data.aws_iam_policy.ecs_task_execution_role.arn
 }
 
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_secrets" {
+  role       = aws_iam_role.backstage.name
+  policy_arn = resource.aws_iam_policy.secrets_manager_access.arn
+}
+
 resource "aws_lb_target_group" "backstage" {
   name        = local.name
   port        = 3000
@@ -162,7 +250,8 @@ resource "aws_alb" "backstage" {
   internal           = false
   load_balancer_type = "application"
 
-  subnets = module.vpc_microservices.public_subnets
+  subnets                    = module.vpc_microservices.public_subnets
+  drop_invalid_header_fields = true
 
   security_groups = [
     aws_security_group.https.id,
