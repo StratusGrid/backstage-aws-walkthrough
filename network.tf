@@ -58,8 +58,7 @@ resource "aws_eip" "nat_gw" {
 }
 
 module "vpc_microservices" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.1.0"
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=7666869d9ca7ff658f5bd10a29dea53bde5dc464"
   name    = "${local.name}-vpc"
   cidr    = "10.${var.vpc_cidr_octet}.0.0/19"
 
@@ -114,6 +113,7 @@ resource "aws_security_group" "https" {
   }
 
   ingress {
+    description = "Allow ingress on 443"
     from_port   = 443
     to_port     = 443
     protocol    = "TCP"
@@ -131,6 +131,7 @@ resource "aws_security_group" "egress_all" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -148,6 +149,7 @@ resource "aws_security_group" "ingress_from_lb" {
   }
 
   ingress {
+    description = "Allow ingress on 3000"
     from_port       = 3000
     to_port         = 3000
     protocol        = "TCP"
@@ -165,6 +167,7 @@ resource "aws_security_group" "ingress_from_ecs" {
   }
 
   ingress {
+    description = "Allow ingress on 5432"
     from_port       = 5432
     to_port         = 5432
     protocol        = "TCP"

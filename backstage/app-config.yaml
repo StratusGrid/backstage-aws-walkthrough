@@ -10,9 +10,12 @@ backend:
   # Used for enabling authentication, secret is shared by all backend plugins
   # See https://backstage.io/docs/auth/service-to-service-auth for
   # information on the format
-  # auth:
-  #   keys:
-  #     - secret: ${BACKEND_SECRET}
+  auth:
+    keys:
+      - secret: ${BACKEND_SECRET}
+    # TODO: once plugins have been migrated we can remove this, but right now it
+    # is require for the backend-next to work in this repo
+    dangerouslyDisableDefaultAuthPolicy: true
   baseUrl: http://localhost:7007
   listen:
     port: 7007
@@ -58,14 +61,6 @@ techdocs:
     runIn: 'local' # Alternatives - 'local'
   publisher:
     type: 'local' # Alternatives - 'googleGcs' or 'awsS3'. Read documentation for using alternatives.
-
-# auth:
-  # see https://backstage.io/docs/auth/ to learn about auth providers
-  # providers:
-  #     github:
-  #       production:
-  #         clientId: ${GITHUB_APP_ORG_CLIENT_ID}
-  #         clientSecret: ${GITHUB_APP_ORG_CLIENT_SECRET}
 
 scaffolder:
   # see https://backstage.io/docs/features/software-templates/configuration for software template options

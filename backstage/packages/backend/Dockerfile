@@ -9,14 +9,14 @@
 #
 # Once the commands have been run, you can build the image using `yarn build-image`
 
-FROM --platform=linux/amd64 node:16-bullseye-slim
+FROM --platform=linux/amd64 node:18-bookworm-slim
 
 # Install sqlite3 dependencies. You can skip this if you don't use sqlite3 in the image,
 # in which case you should also move better-sqlite3 to "devDependencies" in package.json.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y --no-install-recommends libsqlite3-dev python3 build-essential && \
+    apt-get install -y --no-install-recommends g++ libsqlite3-dev python3 build-essential curl && \
     yarn config set python /usr/bin/python3
 
 # From here on we use the least-privileged `node` user to run the backend.
@@ -42,6 +42,8 @@ RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid
 # Then copy the rest of the backend bundle, along with any other files we might want.
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
+
+HEALTHCHECK CMD curl --fail http://localhost:3000 || exit 1
 
 # When running in multiple environments with separate config files, the following allows you to load the environment-specific configuration.
 CMD ["/bin/sh", "-c","node packages/backend --config app-config.yaml --config app-config.${ENVIRONMENT}.yaml"]
