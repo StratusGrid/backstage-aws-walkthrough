@@ -36,6 +36,7 @@ resource "aws_rds_cluster" "postgresql" {
   storage_encrypted                   = true
   iam_database_authentication_enabled = true
   kms_key_id                          = aws_kms_key.backstage_key.arn
+  enabled_cloudwatch_logs_exports     = ["postgresql"]
 }
 
 resource "aws_iam_role" "rds_monitoring_role" {
@@ -62,13 +63,21 @@ resource "aws_iam_policy" "rds_monitoring_policy" {
     Statement = [
       {
         Action = [
-          "cloudwatch:PutMetricData",
-          "logs:PutLogEvents",
-          "logs:DescribeLogStreams",
-          "logs:CreateLogStream"
+          "logs:CreateLogGroup",
+          "logs:PutRetentionPolicy"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = "arn:aws:logs:*:*:log-group:RDS*"
+      },
+      {
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams",
+          "logs:GetLogEvents"
+        ]
+        Effect   = "Allow"
+        Resource = "arn:aws:logs:*:*:log-group:RDS*:log-stream:*"
       },
     ]
   })
