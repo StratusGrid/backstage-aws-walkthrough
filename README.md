@@ -1,10 +1,18 @@
 ## Introduction
 
-This repo contains the Terraform to deploy Backstage to AWS for evaluation purposes. A new VPC and associated resources are created. Backstage will be deployed to ECS in private subnets fronted by an Application Load Balancer in a public subnet. On the backend, Backstage connects to a PostgreSQL RDS instance for state management.
+This repo contains the Terraform to deploy Backstage to AWS for evaluation purposes into an AWS ECS Fargate service. A new VPC and associated resources are created. Backstage will be deployed to ECS in private subnets fronted by an Application Load Balancer in a public subnet. On the backend, Backstage connects to a PostgreSQL RDS instance for state management.
 
 ![ECS Architecture](images/ECS Architecture.png)
 
 Please note that the instructions in this repo will enable you to use Backstage for evaluation purposes. Further investment will be required in order to implement Backstage in a production capacity. See Next Steps below for more details.
+
+## What Is Backstage?
+
+[Backstage](https://backstage.io/docs/overview/what-is-backstage) is a a framework for building developer portals. The three essential features of Backstage are:
+
+- Create new projects and repositories from scaffolded templates.
+- Catalog software components and their associated metadata and relationships.
+- Enrich the understanding of your software components with plugins, viewable in the Backstage UI.
 
 ## IaC Configuration
 
@@ -13,7 +21,16 @@ This repository passes [checkov](https://www.checkov.io/) scans. The following c
 - CKV_AWS_150: Ensure that Load Balancer has deletion protection enabled
 - CKV_AWS_91: Ensure the ELBv2 (Application/Network) has access logging enabled
 - CKV_AWS_139: Ensure that RDS clusters have deletion protection enabled
-- CKV_AWS_324: Ensure that RDS Cluster log capture is enabled
+
+## Difference Between The Walkthrough And Production Instance
+
+In addition to fixing the three checkov checks listed above, in order to run Backstage in production you should consider the following changes:
+
+- Switch from guest authentication to IDP authentication, i.e. [GitHub Auth](https://backstage.io/docs/auth/github/provider/) or [Okta](https://backstage.io/docs/auth/okta/provider).
+- [Install Backstage](https://backstage.io/docs/getting-started/) from source instead of the images provided for the walkthrough.
+- Use Amazon ElastiCache Redis for [catalog caching](https://backstage.io/docs/overview/architecture-overview/#use-redis-for-cache).
+- Configure the [GitHub Discovery](https://backstage.io/docs/integrations/github/discovery/) plugin.
+- Write custom [Backstage templates](https://backstage.io/docs/features/software-templates/).
 
 ## Requirements
 
