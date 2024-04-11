@@ -1,3 +1,14 @@
+<p align="center">
+  <img src="https://github.com/StratusGrid/terraform-readme-template/blob/main/header/stratusgrid-logo-smaller.jpg?raw=true" />
+  
+  <p align="center">
+    <a href="https://stratusgrid.com/book-a-consultation">Contact Us</a> |
+    <a href="https://stratusgrid.com/cloud-cost-optimization-dashboard">Stratusphere FinOps</a> |
+    <a href="https://stratusgrid.com">StratusGrid Home</a> |
+    <a href="https://stratusgrid.com/blog">Blog</a>
+  </p>
+</p>
+
 ## Introduction
 
 This repo contains the Terraform to deploy Backstage to AWS for evaluation purposes into an AWS ECS Fargate service. A new VPC and associated resources are created. Backstage will be deployed to ECS in private subnets fronted by an Application Load Balancer in a public subnet. On the backend, Backstage connects to a PostgreSQL RDS instance for state management.
