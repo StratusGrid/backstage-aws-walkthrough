@@ -279,7 +279,7 @@ resource "aws_alb_listener" "backstage_https" {
   load_balancer_arn = aws_alb.backstage.arn
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = aws_acm_certificate_validation.cert.certificate_arn
 
   default_action {
